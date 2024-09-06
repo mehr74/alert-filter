@@ -1,0 +1,29 @@
+groups:
+  - name: ms
+    rules:
+      - alert: MsServiceRestart
+        target: [qa, prod]
+        expr: |
+          avg without (instance) (
+            changes(ms_service_status{status="running"}[5m])
+          ) > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ms service restart"
+          description: "Ms service restart detected"
+          runbook: "https://example.com/runbook/ms-service-restart"
+      - alert: LogBackErrors
+        target: [tua]
+        expr: |
+          sum by (instance) (
+            rate(logback_events_total{level="error"}[5m])
+          ) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LogBack errors"
+          description: "LogBack errors detected"
+          runbook: "https://example.com/runbook/logback-errors"

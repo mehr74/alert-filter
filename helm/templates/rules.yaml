@@ -1,0 +1,27 @@
+{{- $root := . -}}
+{{- $providedTier := .Values.rules.tier -}}
+{{- $validTierSet := list "general" "application" -}}
+{{- if not (has $providedTier $validTierSet) }}
+  {{- printf "%s is not a valid tier value." $providedTier | fail }}
+{{- end }}
+{{- range $path, $bytes := .Files.Glob $.Values.rules.glob }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ $.Values.namePrefix }}-{{ base $path | replace ".yaml" "" }}
+spec:
+  {{- $outputYaml := fromYaml ($root.Files.Get $path) }}
+  {{- range $groupIdx, $group := $outputYaml.groups }}
+  {{- $_ := set $group "name" (printf "%s-%s" $.Values.namePrefix $group.name) }}
+    {{- $newRules := list }}
+    {{- range $ruleIdx, $rule := $group.rules }}
+      {{- if has "tua" $rule.target }}
+        {{- $rule = unset $rule "target" }}
+        {{- $newRules = append $newRules $rule }}
+      {{- end }}
+    {{- end}}
+    {{- $_ := set $group "rules" $newRules }}
+  {{- end }}
+  {{- tpl (toYaml $outputYaml) $root | nindent 2 }}
+{{- end }}

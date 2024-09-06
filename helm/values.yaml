@@ -1,0 +1,41 @@
+global:
+  severity:
+    critical:
+      labels:
+        send_appops: true
+        mc_tool_rule_priority: "3"
+        mc_tool_rule_on_call_duty: "true"
+        mc_tool_rule_receiver: DWPAWB
+        mc_tool_rule: PROM.DWP.mp_mp_DWPAWB_mRB.3
+  app: example-app
+  boundedContext:
+    name: example-bc
+
+namePrefix: "app-bc"
+labels: {}
+
+rules:
+  glob: "rules/*.yaml"
+  tier: application
+
+  defaultLabels:
+    severity: critical
+    send_mail_from_qa: "false"
+  
+  applicationLabels:
+    app: "{{ .Values.global.app }}"
+    dwp_bounded_context: "{{ .Values.global.boundedContext.name }}"
+    application_group: "microservice"
+  
+  extraLabels:
+    alertOwner: "{{ .Release.Name }}"
+  
+  defaultAnnotations:
+    runbook_url: "{{ tpl .Values.rules.runbook.repoPath $ }}"
+  
+  ignoreRuleWhenRegexMatchesName: []
+
+  runbook:
+    repoPath: ""
+    gitlabUrl: ""
+    branch: "main"
